@@ -24,6 +24,7 @@ public enum UsageProvider: String, CaseIterable, Sendable, Codable {
     case azureopenai
     case claude
     case clinepass
+    case chatbox
     case cursor
     case opencode
     case opencodego

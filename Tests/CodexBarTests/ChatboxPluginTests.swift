@@ -1,0 +1,254 @@
+import Foundation
+import Testing
+@testable import CodexBarCore
+
+struct ChatboxPluginTests {
+    static let fixture = #"""
+    {"data":{"key":"private-response-key","name":"Chatbox AI Pro","plan":"pro","status":"active",
+    "unified_token_usage":300,"unified_token_limit":1500,
+    "unified_token_usage_details":[{"type":"plan","token_usage":200,"token_limit":1000},
+    {"type":"invitation_reward","token_usage":100,"token_limit":500}],
+    "aggregated_reward_details":{"token_usage":100,"token_limit":500},
+    "expansion_pack_usage":50,"expansion_pack_limit":400,"image_used_count":3,"image_total_quota":20,
+    "token_refreshed_time":"2026-10-01T00:00:00Z","token_next_refresh_time":"2026-11-01T00:00:00Z",
+    "token_expire_time":"2027-01-01T00:00:00Z"}}
+    """#
+    private static let now = Date(timeIntervalSince1970: 1_792_454_400) // 2026-10-20 UTC
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `plan rewards expansion and images preserve separate quota pools`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        let usage = try await Self.fetch(Self.fixture, engine: engine)
+        #expect(usage.primary?.usedPercent == 20)
+        #expect(usage.primary?.windowMinutes == nil)
+        #expect(usage.primary?.resetsAt == Self.date("2026-11-01T00:00:00Z"))
+        #expect(usage.secondary?.usedPercent == 12.5)
+        #expect(usage.secondary?.resetsAt == nil)
+        #expect(usage.identity?.loginMethod == "Chatbox AI Pro")
+        #expect(usage.identity?.accountEmail == nil)
+        #expect(usage.identity?.accountID == nil)
+        #expect(usage.details.first?.rows.prefix(4).map(\.value) == [
+            "800 / 1,000", "400 / 500", "350 / 400",
+            "17 / 20",
+        ])
+        #expect(usage.details.first?.title == "Remaining quota")
+        #expect(usage.details.flatMap(\.rows).allSatisfy { $0.progress == nil })
+        #expect(!usage.details.flatMap(\.rows).contains {
+            ["Plan expiry", "Next plan reset"].contains($0.label)
+        })
+        #expect(usage.subscriptionExpiresAt == Self.date("2027-01-01T00:00:00Z"))
+        #expect(!String(describing: usage).contains("private-response-key"))
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `free token resets do not become image resets`(engine: ProviderPluginEngineKind) async throws {
+        var data = try Self.data()
+        data["plan"] = "free"
+        data.removeValue(forKey: "token_expire_time")
+        data["token_next_refresh_time"] = "2026-10-21T16:00:00Z"
+        let usage = try await Self.fetch(Self.body(data), engine: engine)
+        #expect(usage.primary?.windowMinutes == 1440)
+        #expect(usage.primary?.resetsAt == Self.date("2026-10-21T16:00:00Z"))
+        #expect(usage.tertiary == nil)
+        #expect(usage.extraRateWindows == nil)
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `trial rewards and combined legacy totals never invent recurring plan quotas`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        var data = try Self.data()
+        data["unified_token_usage_details"] = [
+            ["type": "plan", "token_usage": 0, "token_limit": 0],
+            ["type": "trial", "token_usage": 100, "token_limit": 500],
+        ]
+        let trial = try await Self.fetch(Self.body(data), engine: engine)
+        #expect(trial.primary == nil)
+        #expect(!trial.details.flatMap(\.rows).contains { $0.label == "Next plan reset" })
+        data.removeValue(forKey: "unified_token_usage_details")
+        let legacy = try await Self.fetch(Self.body(data), engine: engine)
+        #expect(legacy.primary == nil)
+        #expect(legacy.details.first?.rows.first?.value == "1,200 / 1,500")
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `expired disabled and terminal periods retain balances without claiming a reset`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        for status in ["expired", "disabled", "refunded", "unknown"] {
+            var data = try Self.data()
+            data["status"] = status
+            let usage = try await Self.fetch(Self.body(data), engine: engine)
+            #expect(usage.primary == nil)
+            #expect(usage.secondary?.usedPercent == 12.5)
+        }
+        for next in ["0001-01-01T00:00:00Z", "invalid", "2026-09-01T00:00:00Z", "2027-01-01T00:00:00Z"] {
+            var data = try Self.data()
+            data["token_next_refresh_time"] = next
+            let usage = try await Self.fetch(Self.body(data), engine: engine)
+            #expect(usage.primary?.resetsAt == nil)
+        }
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `exhaustion clamps progress while absent optional pools stay unknown`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        let usage = try await Self.fetch(#"""
+        {"data":{"name":"Fixture plan","status":"active","unified_token_usage_details":
+        [{"type":"plan","token_usage":1200,"token_limit":1000}]}}
+        """#, engine: engine)
+        #expect(usage.primary?.usedPercent == 100)
+        #expect(usage.secondary == nil)
+        #expect(usage.details.first?.rows.first?.value == "0 / 1,000")
+        #expect(!usage.details.flatMap(\.rows).contains { $0.label == "Images" })
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `empty pools stay hidden while exhausted balances remain visible`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        var data = try Self.data()
+        data["expansion_pack_usage"] = 0
+        data["expansion_pack_limit"] = 0
+        data["image_used_count"] = 20
+        let usage = try await Self.fetch(Self.body(data), engine: engine)
+        #expect(usage.secondary == nil)
+        #expect(!usage.details.flatMap(\.rows).contains { $0.label == "Expansion pack" })
+        #expect(usage.details.flatMap(\.rows).first { $0.label == "Images" }?.value == "0 / 20")
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `malformed payloads fail without echoing secrets`(engine: ProviderPluginEngineKind) async {
+        for body in [
+            "private-response-key",
+            "null",
+            "[]",
+            "{}",
+            #"{"data":{}}"#,
+            #"{"data":{"unified_token_usage":-1,"unified_token_limit":100}}"#,
+            #"{"data":{"unified_token_usage":true,"unified_token_limit":100}}"#,
+            #"{"data":{"unified_token_usage":9007199254740992,"unified_token_limit":100}}"#,
+            #"{"data":{"unified_token_usage_details":{}}}"#,
+        ] {
+            await Self.expectFailure(body, engine: engine, kind: .parseFailure)
+        }
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `HTTP failures preserve authentication and transient error classifications`(
+        engine: ProviderPluginEngineKind) async
+    {
+        for (status, kind) in [
+            (401, ProviderFetchClassifiedError.Kind.authenticationExpired),
+            (403, .permissionDenied),
+            (409, .apiFailure),
+            (429, .rateLimited),
+            (503, .providerUnavailable),
+        ] {
+            await Self.expectFailure("private-response-key", engine: engine, status: status, kind: kind)
+        }
+    }
+
+    @Test(arguments: BundledPluginTestSupport.engines)
+    func `server downgrade is reread once and repeated transitions stay bounded`(
+        engine: ProviderPluginEngineKind) async throws
+    {
+        for repeated in [false, true] {
+            let calls = CallCount()
+            let runtime = try BundledPluginTestSupport.runtime(
+                "chatbox", engine: engine, transport: ProviderHTTPTransportHandler { request in
+                    let count = calls.increment()
+                    return try Self.response(
+                        request,
+                        body: count == 1 || repeated ? #"{"error":{"code":"license_downgraded"}}"# : Self.fixture,
+                        status: count == 1 || repeated ? 409 : 200)
+                })
+            do {
+                let result = try await runtime.fetchUsage(
+                    secrets: ["CHATBOX_LICENSE_KEY": "fixture-key"],
+                    now: Self.now)
+                #expect(!repeated)
+                #expect(result.primary?.usedPercent == 20)
+            } catch let error as ProviderFetchClassifiedError {
+                #expect(repeated)
+                #expect(error.kind == .apiFailure)
+            }
+            #expect(calls.value == 2)
+        }
+    }
+
+    private static func data() throws -> [String: Any] {
+        let root = try #require(JSONSerialization.jsonObject(with: Data(Self.fixture.utf8)) as? [String: Any])
+        return try #require(root["data"] as? [String: Any])
+    }
+
+    private final class CallCount: @unchecked Sendable {
+        private let lock = NSLock()
+        private var count = 0
+
+        var value: Int {
+            self.lock.withLock { self.count }
+        }
+
+        func increment() -> Int {
+            self.lock.withLock {
+                self.count += 1
+                return self.count
+            }
+        }
+    }
+
+    private static func body(_ data: [String: Any]) throws -> String {
+        try #require(String(data: JSONSerialization.data(withJSONObject: ["data": data]), encoding: .utf8))
+    }
+
+    private static func date(_ text: String) -> Date? {
+        ISO8601DateFormatter().date(from: text)
+    }
+
+    private static func response(
+        _ request: URLRequest,
+        body: String,
+        status: Int = 200) throws -> (Data, HTTPURLResponse)
+    {
+        let response = try #require(HTTPURLResponse(
+            url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Retry-After": "30"]))
+        return (Data(body.utf8), response)
+    }
+
+    private static func fetch(_ body: String, engine: ProviderPluginEngineKind) async throws -> UsageSnapshot {
+        let runtime = try BundledPluginTestSupport.runtime(
+            "chatbox", engine: engine, transport: ProviderHTTPTransportHandler { request in
+                #expect(request.url?.absoluteString == "https://api.chatboxai.app/api/license/detail/all_status")
+                #expect(request.httpMethod == "GET")
+                #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-key")
+                return try Self.response(request, body: body)
+            })
+        return try await runtime.fetchUsage(secrets: ["CHATBOX_LICENSE_KEY": "fixture-key"], now: Self.now)
+    }
+
+    private static func expectFailure(
+        _ body: String,
+        engine: ProviderPluginEngineKind,
+        status: Int = 200,
+        kind: ProviderFetchClassifiedError.Kind) async
+    {
+        do {
+            let runtime = try BundledPluginTestSupport.runtime(
+                "chatbox", engine: engine, transport: ProviderHTTPTransportHandler { request in
+                    try Self.response(request, body: body, status: status)
+                })
+            _ = try await runtime.fetchUsage(secrets: ["CHATBOX_LICENSE_KEY": "fixture-key"], now: Self.now)
+            Issue.record("Expected classified failure")
+        } catch let error as ProviderFetchClassifiedError {
+            #expect(error.kind == kind)
+            #expect(!error.message.contains("private-response-key"))
+            #expect(!error.message.contains("fixture-key"))
+            if status == 429 { #expect(error.retryAfterSeconds == 10) }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+}

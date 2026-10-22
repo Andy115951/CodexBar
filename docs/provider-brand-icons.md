@@ -41,6 +41,7 @@ the property of their owners. Colors are not sampled from screenshots or chosen 
 | --- | --- | --- |
 | Codex | [Official Codex app](https://openai.com/codex/), signed by OpenAI OpCo, LLC (`2DC432GLL2`), version `26.928.31416` / build `12553` | Unmodified transparent PNG from `Contents/Resources/app.asar`, `webview/assets/codex-app-ga-logo-3e5209898ca3.png`. Verified the extracted bytes against the archive's SHA-256 integrity record. Preserved the blue/purple gradient and white terminal mark; no cropping, tracing or recoloring. The shared desktop app identifies itself as `com.openai.codex`. |
 | Claude | [Anthropic brand guidelines](https://github.com/anthropics/skills/blob/8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4/skills/brand-guidelines/SKILL.md) | Existing bundled silhouette, replacing white with the documented primary accent `#D97757`. This is a palette-backed variant, not an unmodified logo download. |
+| Chatbox AI | [Official Chatbox public source](https://github.com/chatboxai/chatbox/blob/main/src/renderer/static/icons/icon-chatbox.svg), verified against Git blob `b33737644557b5bea4b9f86b45a3d63de69d3d27` | Preserved both path geometries, the `24×24` viewBox, and original `#228BE6` fills for the colored asset. The adaptive template replaces the fills with black; the website and embedded CLI dashboard share the template geometry. This is the two-dot in-product mark, separate from the desktop launcher icon. |
 | Antigravity | [Official homepage PNG](https://antigravity.google/assets/image/antigravity-logo.png) | Unmodified transparent PNG. Native SVG decoding flattens the homepage's blurred gradient, so use the official raster asset. |
 | Mistral | [Official homepage](https://mistral.ai/) header SVG; [brand page](https://mistral.ai/brand/) | Preserved all five path fills; adjusted square viewBox for padding. |
 | Muse Code / Meta | [Official developer site asset](https://dev.meta.ai/logo/meta-logo-with-text.svg) | Removed wordmark paths; retained the Meta symbol and gradients. Adjusted square viewBox for padding. |
@@ -76,6 +77,8 @@ SHA-256 pins the reviewed local bytes; a later asset update should update this t
 | `Brand-ProviderIcon-antigravity.png` | `193ba1805de11c23cd0c7a1df92aa0a886708e57350f6f7766100afe5befed73` |
 | `Brand-ProviderIcon-bedrock.svg` | `6a0f3817d771064f3d4cb8687e415417c9abccb3930b049bb8c2643f787ec224` |
 | `Brand-ProviderIcon-claude.svg` | `4cd39a3832c842390c21a6598dba20d4db91632a978cb34e39aa1659fe88fe5c` |
+| `Brand-ProviderIcon-chatbox.svg` | `f6c31dcb7fd031785e3281d0c38b35fcf5c254079589bd2d2e5b27d75ec276b5` |
+| `ProviderIcon-chatbox.svg` | `63962481c3e046bce4e09691794987deeba5198181ab612631362a5ac4dd8d8a` |
 | `Brand-ProviderIcon-mistral.svg` | `13e29ba8fa7a2a01a3086b1cf6601e72fd389ffaac3139ccd95f046cc6f53524` |
 | `Brand-ProviderIcon-muse.svg` | `b49f20f0738c318be02177b1823bc702c6007fe9c0ec20bba8641454cff20bd3` |
 | `Brand-ProviderIcon-vertexai.svg` | `17922247f3110026fd637c531d0604c67a00c9a58a6e152030f2242b9fd48a8e` |

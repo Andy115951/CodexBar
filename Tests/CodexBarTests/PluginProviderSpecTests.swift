@@ -17,6 +17,7 @@ struct PluginProviderSpecTests {
         .deepinfra,
         .zenmux,
         .clinepass,
+        .chatbox,
         .aiand,
         .synthetic, .chutes, .v0, .elevenlabs, .neuralwatt, .clawrouter,
         .aixy, .bifrost, .deepgram, .llmproxy, .litellm, .sub2api, .llmman,

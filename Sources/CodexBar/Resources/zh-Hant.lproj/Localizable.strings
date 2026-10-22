@@ -2679,3 +2679,33 @@
 "No personal budget configured" = "尚未設定個人預算";
 
 "monthly_daily_target_format" = "每天約 %@，可用至重置";
+
+/* Chatbox AI provider */
+"Plan compute points" = "方案計算點數";
+"Expansion pack" = "擴充包";
+"Chatbox AI cost history is not available." = "暫不支援 Chatbox AI 費用記錄。";
+"License key override" = "指定 License Key";
+"Automatic from Chatbox" = "自動從 Chatbox 讀取";
+"Remaining quota" = "剩餘額度";
+"Combined compute points" = "總計算點數";
+"Reward compute points" = "獎勵計算點數";
+"Images" = "圖片額度";
+"License status" = "授權狀態";
+"Credential source" = "憑證來源";
+"Chatbox app account" = "Chatbox 應用程式內帳號登入";
+"Chatbox app license" = "Chatbox 應用程式內 License 啟用";
+"Manual key" = "手動填寫的 Key";
+"Refunding" = "退款處理中";
+"Refunded" = "已退款";
+"Quota and license information" = "額度與授權資訊";
+"Activated" = "已啟用";
+"Account login" = "帳號登入";
+"License activation" = "License 啟用";
+"Save and verify" = "儲存並驗證";
+"Restore automatic detection" = "恢復自動讀取";
+"Changes not applied. Save to verify." = "修改尚未生效，請儲存並驗證。";
+"Verifying Chatbox credentials…" = "正在驗證 Chatbox 憑證…";
+"Credentials verified. Usage refreshed." = "驗證成功，用量已重新整理。";
+"Settings saved. Verification failed; see the provider error above." = "設定已儲存，但驗證失敗，請查看上方錯誤提示。";
+"Settings saved. Verification was interrupted; refresh to try again." = "設定已儲存，驗證已中斷，請重新驗證。";
+"Click Save and verify or press Return to apply this key. Leave empty or restore automatic detection to read Chatbox's current account or activated license. Saved keys are stored in CodexBar's local config file." = "點擊「儲存並驗證」或按 Return 後生效。留空儲存或點擊「恢復自動讀取」，將讀取 Chatbox 目前帳號或已啟用的 License。儲存的 Key 存放在 CodexBar 本機設定檔中。";

@@ -167,6 +167,13 @@ struct ProviderSettingsFieldDescriptor: Identifiable {
         case secure
     }
 
+    /// Opt in to in-memory editing with an explicit commit and optional clear action.
+    struct Submission {
+        let title: String
+        let resetTitle: String?
+        let perform: () async -> Void
+    }
+
     let id: String
     let title: String
     let subtitle: String
@@ -176,6 +183,7 @@ struct ProviderSettingsFieldDescriptor: Identifiable {
     let binding: Binding<String>
     let actions: [ProviderSettingsActionDescriptor]
     let isVisible: (() -> Bool)?
+    var submission: Submission?
 }
 
 /// Shared opt-in directory list; provider implementations supply data, not custom views.

@@ -6,6 +6,9 @@ extension UsageMenuCardView.Model {
         _ details: [ProviderDetailSection],
         provider: UsageProvider) -> [ProviderDetailSection]
     {
+        if let localized = ProviderCatalog.implementation(for: provider)?.localizedDetails(details) {
+            return localized
+        }
         // Provider-specific by design: DeepSeek, z.ai, Kiro, and Grok rewrite value phrasing.
         // Other providers localize section titles and row labels through the shared catalog; values stay canonical.
         guard provider == .deepseek || provider == .zai || provider == .kiro || provider == .grok else {

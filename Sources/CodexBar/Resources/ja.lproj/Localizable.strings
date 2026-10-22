@@ -2701,3 +2701,33 @@
 "No personal budget configured" = "個人予算が設定されていません";
 
 "monthly_daily_target_format" = "リセットまで持たせる目安：1日あたり約 %@";
+
+/* Chatbox AI provider */
+"Plan compute points" = "Plan compute points";
+"Expansion pack" = "Expansion pack";
+"Chatbox AI cost history is not available." = "Chatbox AI cost history is not available.";
+"License key override" = "License key override";
+"Automatic from Chatbox" = "Automatic from Chatbox";
+"Remaining quota" = "Remaining quota";
+"Combined compute points" = "Combined compute points";
+"Reward compute points" = "Reward compute points";
+"Images" = "Images";
+"License status" = "License status";
+"Credential source" = "Credential source";
+"Chatbox app account" = "Chatbox app account";
+"Chatbox app license" = "Chatbox app license";
+"Manual key" = "Manual key";
+"Refunding" = "Refunding";
+"Refunded" = "Refunded";
+"Quota and license information" = "Quota and license information";
+"Activated" = "Activated";
+"Account login" = "Account login";
+"License activation" = "License activation";
+"Save and verify" = "Save and verify";
+"Restore automatic detection" = "Restore automatic detection";
+"Changes not applied. Save to verify." = "Changes not applied. Save to verify.";
+"Verifying Chatbox credentials…" = "Verifying Chatbox credentials…";
+"Credentials verified. Usage refreshed." = "Credentials verified. Usage refreshed.";
+"Settings saved. Verification failed; see the provider error above." = "Settings saved. Verification failed; see the provider error above.";
+"Settings saved. Verification was interrupted; refresh to try again." = "Settings saved. Verification was interrupted; refresh to try again.";
+"Click Save and verify or press Return to apply this key. Leave empty or restore automatic detection to read Chatbox's current account or activated license. Saved keys are stored in CodexBar's local config file." = "Click Save and verify or press Return to apply this key. Leave empty or restore automatic detection to read Chatbox's current account or activated license. Saved keys are stored in CodexBar's local config file.";

@@ -10,6 +10,7 @@ enum BurnProviderChoice: String, AppEnum {
     case azureopenai
     case claude
     case clinepass
+    case chatbox
     case cursor
     case opencode
     case opencodego
@@ -121,6 +122,7 @@ enum BurnProviderChoice: String, AppEnum {
         .azureopenai: DisplayRepresentation(title: "Azure OpenAI"),
         .claude: DisplayRepresentation(title: "Claude"),
         .clinepass: DisplayRepresentation(title: "ClinePass"),
+        .chatbox: DisplayRepresentation(title: "Chatbox AI"),
         .cursor: DisplayRepresentation(title: "Cursor"),
         .opencode: DisplayRepresentation(title: "OpenCode"),
         .opencodego: DisplayRepresentation(title: "OpenCode Go"),

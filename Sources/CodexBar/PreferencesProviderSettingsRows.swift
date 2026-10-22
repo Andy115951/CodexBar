@@ -129,17 +129,23 @@ struct ProviderSettingsPickerRowView: View {
 struct ProviderSettingsFieldRowView: View {
     let field: ProviderSettingsFieldDescriptor
     var inline = false
+    @State private var editor = ProviderSettingsFieldEditor()
 
     var body: some View {
-        if self.inline {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(L(self.field.title))
-                self.fieldView.textFieldStyle(.roundedBorder)
-                ProviderSettingsButtonsView(actions: self.field.actions)
-                self.footerView
+        Group {
+            if self.inline {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L(self.field.title))
+                    self.fieldView.textFieldStyle(.roundedBorder)
+                    self.actionsView
+                    self.footerView
+                }
+            } else {
+                self.section.textFieldStyle(.plain)
             }
-        } else {
-            self.section.textFieldStyle(.plain)
+        }
+        .onChange(of: self.field.binding.wrappedValue) { _, _ in
+            self.editor.savedValueChanged()
         }
     }
 
@@ -148,7 +154,7 @@ struct ProviderSettingsFieldRowView: View {
         return Section {
             self.fieldView
 
-            ProviderSettingsButtonsView(actions: self.field.actions)
+            self.actionsView
         } header: {
             if !trimmedTitle.isEmpty {
                 Text(L(trimmedTitle))
@@ -163,22 +169,73 @@ struct ProviderSettingsFieldRowView: View {
         return Group {
             switch self.field.kind {
             case .plain:
-                TextField(text: self.field.binding, prompt: prompt) {
+                TextField(text: self.editingBinding, prompt: prompt) {
                     EmptyView()
                 }
             case .secure:
-                SecureField(text: self.field.binding, prompt: prompt) {
+                SecureField(text: self.editingBinding, prompt: prompt) {
                     EmptyView()
                 }
             }
         }
         .labelsHidden()
+        .disabled(self.editor.isSubmitting)
+        .onSubmit {
+            guard self.field.submission != nil else { return }
+            Task { @MainActor in await self.submit() }
+        }
+    }
+
+    private var editingBinding: Binding<String> {
+        guard self.field.submission != nil else { return self.field.binding }
+        return Binding(
+            get: { self.editor.value(savedValue: self.field.binding.wrappedValue) },
+            set: { self.editor.edit($0) })
+    }
+
+    @ViewBuilder
+    private var actionsView: some View {
+        if let submission = self.field.submission {
+            HStack(spacing: 10) {
+                Button(L(submission.title)) {
+                    Task { @MainActor in await self.submit() }
+                }
+                if let title = submission.resetTitle {
+                    Button(L(title)) {
+                        Task { @MainActor in await self.submit(reset: true) }
+                    }
+                }
+                if self.editor.isSubmitting {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(self.editor.isSubmitting)
+        }
+        ProviderSettingsButtonsView(actions: self.field.actions)
+            .disabled(self.editor.isSubmitting)
+    }
+
+    private func submit(reset: Bool = false) async {
+        guard let submission = self.field.submission,
+              let value = self.editor.beginSubmission(savedValue: self.field.binding.wrappedValue, reset: reset)
+        else { return }
+        defer { self.editor.finishSubmission() }
+        self.field.binding.wrappedValue = value
+        await submission.perform()
     }
 
     @ViewBuilder
     private var footerView: some View {
         let trimmedSubtitle = self.field.subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let footer = (self.field.footerText?.isEmpty == false) ? self.field.footerText : nil
+        let footer: String? = if self.field.submission != nil,
+                                 self.editor.hasUnappliedChanges(savedValue: self.field.binding.wrappedValue)
+        {
+            "Changes not applied. Save to verify."
+        } else {
+            (self.field.footerText?.isEmpty == false) ? self.field.footerText : nil
+        }
         if !trimmedSubtitle.isEmpty || footer != nil {
             SettingsSectionFooter {
                 VStack(alignment: .leading, spacing: 3) {

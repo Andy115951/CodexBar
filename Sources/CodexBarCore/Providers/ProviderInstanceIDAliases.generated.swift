@@ -8,6 +8,7 @@ extension ProviderInstanceID {
     public static let azureopenai = UsageProvider.azureopenai.instanceID
     public static let claude = UsageProvider.claude.instanceID
     public static let clinepass = UsageProvider.clinepass.instanceID
+    public static let chatbox = UsageProvider.chatbox.instanceID
     public static let cursor = UsageProvider.cursor.instanceID
     public static let opencode = UsageProvider.opencode.instanceID
     public static let opencodego = UsageProvider.opencodego.instanceID

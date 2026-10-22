@@ -10,6 +10,7 @@ enum ProviderImplementationManifest {
         AzureOpenAIProviderImplementation(),
         ClaudeProviderImplementation(),
         PluginAPIKeyProviderImplementation(spec: ClinePassProviderDescriptor.spec),
+        ChatboxProviderImplementation(),
         CursorProviderImplementation(),
         OpenCodeProviderImplementation(),
         OpenCodeGoProviderImplementation(),

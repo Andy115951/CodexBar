@@ -10,6 +10,9 @@ protocol ProviderImplementation: Sendable {
     var id: UsageProvider { get }
     var supportsLoginFlow: Bool { get }
 
+    /// Optional provider-owned localization for canonical detail values.
+    func localizedDetails(_ details: [ProviderDetailSection]) -> [ProviderDetailSection]?
+
     @MainActor
     func presentation(context: ProviderPresentationContext) -> ProviderPresentation
 
@@ -112,6 +115,8 @@ protocol ProviderImplementation: Sendable {
 }
 
 extension ProviderImplementation {
+    func localizedDetails(_: [ProviderDetailSection]) -> [ProviderDetailSection]? { nil }
+
     var supportsLoginFlow: Bool {
         false
     }

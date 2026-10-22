@@ -10,6 +10,7 @@ public enum ProviderManifest {
         AzureOpenAIProviderDescriptor.descriptor,
         ClaudeProviderDescriptor.descriptor,
         ClinePassProviderDescriptor.descriptor,
+        ChatboxProviderDescriptor.descriptor,
         CursorProviderDescriptor.descriptor,
         OpenCodeProviderDescriptor.descriptor,
         OpenCodeGoProviderDescriptor.descriptor,
