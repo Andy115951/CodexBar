@@ -49,6 +49,34 @@ struct ChatboxSettingsReaderTests {
     }
 
     @Test
+    func `tests require an explicit profile even when HOME contains a valid app license`() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let relativePath = "Library/Application Support/xyz.chatboxapp.app/config.json"
+        let file = directory.appendingPathComponent(relativePath)
+        try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try #"{"settings":{"licenseKey":"synthetic-app-key","licenseActivationMethod":"login"}}"#
+            .write(to: file, atomically: true, encoding: .utf8)
+
+        let environment = ["HOME": directory.path]
+        #expect(ChatboxSettingsReader.credential(environment: environment, fileURL: file)?.key == "synthetic-app-key")
+        #expect(ChatboxSettingsReader.credential(environment: environment) == nil)
+        for path in ["", " \n "] {
+            #expect(ChatboxSettingsReader.credential(environment: [
+                "HOME": directory.path, "CHATBOX_CONFIG_PATH": path,
+            ]) == nil)
+        }
+        for path in [file.path, "~/\(relativePath)"] {
+            #expect(ChatboxSettingsReader.credential(environment: [
+                "HOME": directory.path, "CHATBOX_CONFIG_PATH": path,
+            ])?.key == "synthetic-app-key")
+        }
+        #expect(ChatboxSettingsReader.credential(environment: [
+            "HOME": directory.path, "CHATBOX_LICENSE_KEY": "synthetic-manual-key",
+        ])?.key == "synthetic-manual-key")
+    }
+
+    @Test
     func `refresh follows app switches and clears without modifying the profile`() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

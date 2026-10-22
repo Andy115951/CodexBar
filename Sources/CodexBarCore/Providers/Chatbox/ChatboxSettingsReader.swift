@@ -20,9 +20,10 @@ public enum ChatboxSettingsReader {
             guard self.isValidKey(key) else { return nil }
             return Credential(key: key, source: "manual")
         }
-        // Tests must supply a contained profile and never discover the user's desktop credentials.
+        // HOME is inherited by ordinary test runs, so it does not prove the profile is contained.
+        // Tests must explicitly select a profile instead of discovering desktop credentials.
         guard !TestProcessSafety.isRunning || fileURL != nil ||
-            ["CHATBOX_CONFIG_PATH", "HOME"].contains(where: { SettingsValue.cleaned(environment[$0]) != nil }),
+            SettingsValue.cleaned(environment["CHATBOX_CONFIG_PATH"]) != nil,
             let file = fileURL ?? self.configurationURL(environment: environment),
             let values = try? file.resourceValues(forKeys: [.isRegularFileKey]), values.isRegularFile == true,
             let handle = try? FileHandle(forReadingFrom: file)
